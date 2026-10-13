@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CS - Company Sawce</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/three.module.js",
+  "three/addons/": "./vendor/three/examples/jsm/"
+} }
+</script>
+</head>
+
+<body>
+  <canvas id="c"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="crosshair"><i class="reticle-line up"></i><i class="reticle-line right"></i><i
+        class="reticle-line down"></i><i class="reticle-line left"></i><i class="reticle-dot"></i></div>
+    <div id="hitmarker"></div>
+    <div id="scope" class="hidden"></div>
+    <div id="damage"></div>
+    <div id="feed"></div>
+    <div id="stats">
+      <div id="hp"><span id="hpval">100</span>
+        <div class="bar"><i id="hpbar"></i></div>
+      </div>
+      <div id="ammo"><b id="wname">AK-47</b><span id="ammoval">30 / 90</span></div>
+    </div>
+    <div id="hint"><kbd>1</kbd> principal · <kbd>2</kbd> Glock · <kbd>3</kbd> faca · <kbd>F</kbd> roda de armas · <kbd>R</kbd> recarregar ·
+      <kbd>RMB</kbd> mira (AWM) · <kbd>Tab</kbd> placar</div>
+    <div id="wheel" class="hidden"></div>
+    <div id="loadout" class="hidden" role="dialog" aria-labelledby="loadout-title">
+      <section>
+        <p>NOVO NASCIMENTO</p>
+        <h1 id="loadout-title">Escolha sua arma principal</h1>
+        <p class="loadout-note">Esta escolha fica bloqueada até você morrer e renascer.</p>
+        <div class="loadout-options">
+          <button type="button" data-primary="ak47"><kbd>1</kbd><span>AK-47</span></button>
+          <button type="button" data-primary="m4a1"><kbd>2</kbd><span>M4A1</span></button>
+          <button type="button" data-primary="deagle"><kbd>3</kbd><span>Desert Eagle</span></button>
+          <button type="button" data-primary="awm"><kbd>4</kbd><span>AWM</span></button>
+        </div>
+      </section>
+    </div>
+    <div id="board" class="hidden"></div>
+    <div id="pause" class="hidden">
+      <section class="settings-panel" aria-labelledby="settings-title">
+        <header>
+          <p class="settings-kicker">DUST Gun Game</p>
+          <h1 id="settings-title">Configurações</h1>
+          <p class="settings-note">Ajustes salvos automaticamente</p>
+        </header>
+        <div class="settings-group">
+          <label class="range-setting" for="setting-volume"><span>Volume do jogo</span><output
+              id="volume-value">70%</output></label>
+          <input id="setting-volume" type="range" min="0" max="100" step="1" value="70">
+        </div>
+        <div class="settings-group">
+          <label class="range-setting" for="setting-sensitivity"><span>Sensibilidade da mira</span><output
+              id="sensitivity-value">1.0x</output></label>
+          <input id="setting-sensitivity" type="range" min="0.5" max="3" step="0.1" value="1">
+        </div>
+        <div class="settings-group">
+          <label for="setting-reticle">Formato da retícula</label>
+          <select id="setting-reticle">
+            <option value="cross">Traços</option>
+            <option value="dot">Somente ponto</option>
+          </select>
+        </div>
+        <div id="reticle-lines-settings">
+          <div class="settings-group">
+            <label class="range-setting" for="setting-length"><span>Comprimento dos traços</span><output
+                id="length-value">8 px</output></label>
+            <input id="setting-length" type="range" min="2" max="24" step="1" value="8">
+          </div>
+          <div class="settings-group">
+            <label class="range-setting" for="setting-gap"><span>Espaçamento central</span><output id="gap-value">4
+                px</output></label>
+            <input id="setting-gap" type="range" min="0" max="16" step="1" value="4">
+          </div>
+          <div class="settings-group">
+            <label class="range-setting" for="setting-thickness"><span>Espessura</span><output id="thickness-value">2
+                px</output></label>
+            <input id="setting-thickness" type="range" min="1" max="6" step="1" value="2">
+          </div>
+        </div>
+        <div id="reticle-dot-settings" class="settings-group hidden">
+          <label class="range-setting" for="setting-dot-size"><span>Tamanho do ponto</span><output id="dot-size-value">4
+              px</output></label>
+          <input id="setting-dot-size" type="range" min="2" max="12" step="1" value="4">
+        </div>
+        <div class="settings-group color-setting">
+          <label for="setting-reticle-color">Cor da retícula</label><input id="setting-reticle-color" type="color"
+            value="#ffffff">
+        </div>
+        <button id="resume" type="button">RETOMAR JOGO</button>
+        <p class="pause-hint"><kbd>ESC</kbd> pausa o jogo</p>
+      </section>
+    </div>
+    <div id="dead" class="hidden">
+      <h1>Você morreu</h1>
+      <p id="deadby"></p>
+      <p id="respawn"></p>
+    </div>
+  </div>
+
+  <!-- Tela inicial -->
+  <div id="menu">
+    <div class="card">
+      <h1>DUST <em>FFA</em></h1>
+      <p class="sub">Free-for-all · 3D no navegador</p>
+      <div id="loadbar"><i id="loadfill"></i></div>
+      <p id="loadtxt">Carregando mapa…</p>
+      <form id="form" class="hidden" autocomplete="off">
+        <label for="nick">Apelido (3–16, letras/números/_)</label>
+        <input id="nick" maxlength="16" placeholder="seu_nome" required>
+        <button id="play" type="submit">JOGAR</button>
+        <p id="msg"></p>
+        <p id="mode"></p>
+      </form>
+      <p class="credits">Mapa: "de_dust2 - CS map" por vrchris (CC-BY-4.0)</p>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,56 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "admins": { ".read": false, ".write": false },
+
+    "bans": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && root.child('admins/' + auth.uid).val() === true"
+      }
+    },
+
+    "names": {
+      "$name": {
+        ".read": "auth != null",
+        ".write": "auth != null && !root.child('bans/' + auth.uid).exists() && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && (!newData.exists() || newData.val() === auth.uid)))",
+        ".validate": "$name.matches(/^[a-z0-9_]{3,16}$/)"
+      }
+    },
+
+    "players": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid && !root.child('bans/' + auth.uid).exists()",
+        "name": { ".validate": "newData.isString() && newData.val().matches(/^[a-zA-Z0-9_]{3,16}$/)" }
+      }
+    },
+
+    "state": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && !root.child('bans/' + auth.uid).exists()"
+      }
+    },
+
+    "hits": {
+      "$victim": {
+        ".read": "auth != null && auth.uid === $victim",
+        "$id": {
+          ".write": "auth != null && ((!root.child('bans/' + auth.uid).exists() && newData.child('from').val() === auth.uid) || (auth.uid === $victim && !newData.exists()))",
+          ".validate": "!newData.exists() || (newData.child('dmg').isNumber() && newData.child('dmg').val() >= 0 && newData.child('dmg').val() <= 100)"
+        }
+      }
+    },
+
+    "feed": {
+      ".read": "auth != null",
+      ".indexOn": ["t"],
+      "$id": {
+        ".write": "auth != null && !root.child('bans/' + auth.uid).exists()"
+      }
+    }
+  }
+}
